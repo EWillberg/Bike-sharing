@@ -9,7 +9,8 @@ import pandas as pd
 import datetime as dt
 import numpy as np
 
-"""PATH = BSS DATA, PATH2 = BSS STATION DATA, PATH3 = POSTAL CODE DATA """
+#PATH = BSS DATA, 
+#PATH2 = BSS STATION DATA
 path = 'C:\HY-Data\ELWI\BikeSharingData\Processed2017\CSV\ProcessedData_Full_season\city_bike_stats_Combined_Full_Season.csv'
 path2 = 'C:\HY-Data\ELWI\BikeSharingData\Mikkos_Desciptive_Excel\StationCoordinates.csv'
 
