@@ -1,10 +1,19 @@
 # -*- coding: utf-8 -*-
 
-"""
-Created on Fri Oct 20 15:41:46 2017
+'''
+Usage:
 
-@author: elwi
-"""
+    This script is intended for bike-sharing data provided by Helsinki region transport and CityBikeFinland
+
+    The script cleans bike-sharing data by applying different filters, which remove trips that distort analyses. 
+
+Created 
+    Fri Oct 20 15:41:46 2017
+
+Author: 
+    Elias Willberg
+    
+'''
 import pandas as pd
 import datetime as dt
 import numpy as np
@@ -12,19 +21,12 @@ import numpy as np
 #PATH = BSS DATA, 
 #PATH2 = BSS STATION DATA
 path = 'C:\HY-Data\ELWI\BikeSharingData\Processed2017\CSV\ProcessedData_Full_season\city_bike_stats_Combined_Full_Season.csv'
-path2 = 'C:\HY-Data\ELWI\BikeSharingData\Mikkos_Desciptive_Excel\StationCoordinates.csv'
+path2 = 'C:\HY-Data\ELWI\BikeSharingData\BSS_Excels\StationCoordinates.csv'
 
 df1= pd.read_csv(path, sep = ";", encoding = "utf8")
 StatCoordinates = pd.read_csv(path2, sep=';')
 
-type(df1)
-print (df1.columns)
-print(df1.head())
-print(StatCoordinates.head())
-
 pd.options.display.float_format = '{:.2f}'.format # format precision in describe output
-
-df1.describe()
 
 # TRIP DISTANCE FILTER (filter out less than 100m and more than 70km trips
 df_filtered = df1.ix[(df1['covered_distance'] > 100) & (df1['covered_distance'] != 0) &
