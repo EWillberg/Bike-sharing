@@ -3,7 +3,7 @@
 '''
 Usage:
 
-    This script is intended for bike-sharing data provided by Helsinki region transport and CityBikeFinland
+    This script is intended for processing bike-sharing data provided by Helsinki region transport and CityBikeFinland
 
     The script cleans bike-sharing data by applying different filters, which remove trips that distort analyses. 
 
