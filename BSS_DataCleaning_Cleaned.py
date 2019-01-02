@@ -7,7 +7,7 @@ Usage:
 
     The script cleans bike-sharing data by applying different filters, which remove trips that distort analyses. 
 
-Created 
+Created: 
     Fri Oct 20 15:41:46 2017
 
 Author: 
