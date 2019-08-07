@@ -199,7 +199,7 @@ b2.set_ylabel('Trip count day / bike', fontsize=30)
 b2.set_xticklabels(WeeklyTripCountPerBike.week, fontsize=23)
 b2.set_yticklabels([str(int(x)) for x in b2.get_yticks([])], fontsize=25)
 
-# Histogram 6: Hourly trip count variation by gender
+# Lineplot 1: Hourly trip count variation by gender
 hourlyTripGroupByGender = manipulatedDF.groupby(["DepHour", "hsl_gender", "WeekOrWeekend"]).count().reset_index()
 hourlyTripGroupByGender = hourlyTripGroupByGender.loc[(hourlyTripGroupByGender["hsl_gender"] == "male") | (hourlyTripGroupByGender["hsl_gender"] == "female")]
 
@@ -208,12 +208,11 @@ hourlyTripGroupByMen = hourlyTripGroupByGender.loc[hourlyTripGroupByGender["hsl_
 
 hourlyTripGroupByGender["genderWeekday"] = hourlyTripGroupByGender["hsl_gender"] + "_" + hourlyTripGroupByGender["WeekOrWeekend"].astype(str)
 hourlyTripGroupByGender["tripPercent"] = hourlyTripGroupByGender.apply(lambda row:(row["index"] / hourlyTripGroupByWomen["index"].sum())*100 if (row["hsl_gender"] == "female") else (row["index"] / hourlyTripGroupByMen["index"].sum())*100, axis = 1)
-ax = sns.lineplot(y = "tripPercent", x = "DepHour", hue = "genderWeekday", data =  hourlyTripGroupByGender)
-ax.xaxis.set_major_locator(plticker.MultipleLocator(1))
-plt.tight_layout()
+ax = sns.lineplot(y = "tripPercent", x = "DepHour", hue = "genderWeekday", data =  hourlyTripGroupByGender, palette =["coral", "coral", "navy" ,"navy"], style = "WeekOrWeekend")
+plt.xticks(np.arange(0, 24, step=1))
 plt.show()
 
-# Histogram 7: Hourly trip count variation by home area
+# Lineplot 2: Hourly trip count variation by home area
 hourlyTripGroupByHomeArea = manipulatedDF.groupby(["DepHour", "InsideArea", "WeekOrWeekend"]).count().reset_index()
 hourlyTripGroupByHomeArea = hourlyTripGroupByHomeArea.loc[(hourlyTripGroupByHomeArea["InsideArea"] == 0) | (hourlyTripGroupByHomeArea["InsideArea"] == 1)]
 
@@ -221,11 +220,66 @@ hourlyTripGroupByInsideUsers = hourlyTripGroupByHomeArea.loc[hourlyTripGroupByHo
 hourlyTripGroupByOutsideUsers = hourlyTripGroupByHomeArea.loc[hourlyTripGroupByHomeArea["InsideArea"] == 0]
 
 hourlyTripGroupByHomeArea["homeAreaWeekday"] = hourlyTripGroupByHomeArea["InsideArea"].astype(str) + "_" + hourlyTripGroupByHomeArea["WeekOrWeekend"].astype(str)
-hourlyTripGroupByHomeArea["tripPercent"] = hourlyTripGroupByHomeArea.apply(lambda row:(row["index"] / hourlyTripGroupByInsideUsers["index"].sum())*100 if (row["InsideArea"] == 1) else (row["index"] / hourlyTripGroupByOutsideUsers["index"].sum())*100, axis = 1)
-ax = sns.lineplot(y = "tripPercent", x = "DepHour", hue = "homeAreaWeekday", data =  hourlyTripGroupByHomeArea)
+hourlyTripGroupByHomeArea["tripPercent"] = hourlyTripGroupByHomeArea.apply(lambda row:(row["index"] / hourlyTripGroupByInsideUsers["index"].sum())*100
+                                            if (row["InsideArea"] == 1)
+                                            else (row["index"] / hourlyTripGroupByOutsideUsers["index"].sum())*100, axis = 1)
+ax = sns.lineplot(y = "tripPercent", x = "DepHour", hue = "homeAreaWeekday", data =  hourlyTripGroupByHomeArea, palette =["coral", "coral", "navy" ,"navy"], style = "WeekOrWeekend")
+plt.xticks(np.arange(0, 24, step=1))
+plt.show()
+
+# Lineplot 3: Hourly trip count variation by age group
+manipulatedDF['age_dec'] = manipulatedDF.hsl_age.map( lambda hsl_age: 20 * (hsl_age // 20))  # Create age decade column
+
+hourlyTripGroupByAgeGroup = manipulatedDF.groupby(["DepHour", "age_dec", "WeekOrWeekend"]).count().reset_index()
+hourlyTripGroupByAgeGroup = hourlyTripGroupByAgeGroup.loc[hourlyTripGroupByAgeGroup["age_dec"] < 80]
+
+hourlyTripGroupByAge_0_20 = hourlyTripGroupByAgeGroup.loc[hourlyTripGroupByAgeGroup["age_dec"] < 20]
+hourlyTripGroupByAge_21_40 = hourlyTripGroupByAgeGroup.loc[(hourlyTripGroupByAgeGroup["age_dec"] >= 20) & (hourlyTripGroupByAgeGroup["age_dec"] < 40)]
+hourlyTripGroupByAge_41_60 = hourlyTripGroupByAgeGroup.loc[(hourlyTripGroupByAgeGroup["age_dec"] >= 40) & (hourlyTripGroupByAgeGroup["age_dec"] < 60)]
+hourlyTripGroupByAge_61_80 = hourlyTripGroupByAgeGroup.loc[(hourlyTripGroupByAgeGroup["age_dec"] >= 60) & (hourlyTripGroupByAgeGroup["age_dec"] < 80)]
+
+hourlyTripGroupByAgeGroup["ageGroupWeekday"] = hourlyTripGroupByAgeGroup["age_dec"].astype(str) + "_" + hourlyTripGroupByAgeGroup["WeekOrWeekend"].astype(str)
+hourlyTripGroupByAgeGroup["tripPercent"] = hourlyTripGroupByAgeGroup.apply(lambda row:(row["index"] / hourlyTripGroupByAge_0_20["index"].sum())*100
+                                            if (row["age_dec"] == 0)
+                                            else ((row["index"] / hourlyTripGroupByAge_21_40["index"].sum())*100
+                                                                           if row["age_dec"] == 20
+                                                                           else ((row["index"] / hourlyTripGroupByAge_41_60["index"].sum())*100
+                                                                                                    if row["age_dec"] == 40
+                                                                                                    else ((row["index"] / hourlyTripGroupByAge_61_80["index"].sum())*100))), axis = 1)
+
+ax = sns.lineplot(y = "tripPercent", x = "DepHour", hue = "ageGroupWeekday", data =  hourlyTripGroupByAgeGroup, palette =["coral", "coral", "c" ,"c", "k", "k", "forestgreen", "forestgreen"], style = "WeekOrWeekend")
+plt.xticks(np.arange(0, 24, step=1))
+plt.show()
+
+# Lineplot 4: Hourly trip count variation by subscription type
+hourlyTripGroupByFormula = manipulatedAllUsersDF.groupby(["DepHour", "formula", "WeekOrWeekend"]).count().reset_index()
+hourlyTripGroupByFormula = hourlyTripGroupByFormula.loc[(hourlyTripGroupByFormula["formula"] == "Day") | (hourlyTripGroupByFormula["formula"] == "Week") | (hourlyTripGroupByFormula["formula"] == "Year")]
+
+hourlyTripGroupByDayUsers = hourlyTripGroupByFormula.loc[hourlyTripGroupByFormula["formula"] == "Day"]
+hourlyTripGroupByWeekUsers = hourlyTripGroupByFormula.loc[hourlyTripGroupByFormula["formula"] == "Week"]
+hourlyTripGroupByYearUsers = hourlyTripGroupByFormula.loc[hourlyTripGroupByFormula["formula"] == "Year"]
+
+hourlyTripGroupByFormula["formulaWeekday"] = hourlyTripGroupByFormula["formula"].astype(str) + "_" + hourlyTripGroupByFormula["WeekOrWeekend"].astype(str)
+hourlyTripGroupByFormula["tripPercent"] = hourlyTripGroupByFormula.apply(lambda row:(row["index"] / hourlyTripGroupByDayUsers["index"].sum())*100
+                                            if (row["formula"] == "Day")
+                                            else ((row["index"] / hourlyTripGroupByWeekUsers["index"].sum())*100
+                                                                           if row["formula"] == "Week"
+                                                                           else ((row["index"] / hourlyTripGroupByYearUsers["index"].sum())*100)), axis = 1)
 
 
-# Histogram 7: Trip time variation
+ax = sns.lineplot(y = "tripPercent", x = "DepHour", hue = "formulaWeekday", data =  hourlyTripGroupByFormula, palette =["coral", "coral", "c" ,"c", "k", "k"], style = "WeekOrWeekend")
+plt.xticks(np.arange(0, 24, step=1))
+plt.show()
+
+# Lineplot 5: Hourly trip count variation by use activity
+hourlyTripGroupByUseActivity = manipulatedAllUsersDF.groupby(["DepHour", "WeekOrWeekend"]).count().reset_index()
+
+hourlyTripGroupByUseActivity.sort_values('index', ascending=False, inplace=True)
+q = pd.qcut(hourlyTripGroupByUseActivity["index"], 5)
+hourlyTripGroupByUseActivity['ActivityQ'] = q
+
+
+# Histogram 6: Trip time variation
 manipulatedDF['duration_group'] = manipulatedDF.duration.map(
     lambda duration: (duration / 60))  # create the age by decade column
 manipulatedDF['duration_group'] = manipulatedDF.duration_group.map(
