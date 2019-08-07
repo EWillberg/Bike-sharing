@@ -107,7 +107,7 @@ ageCounts2 = onlyMenAndWomen2['age_dec'].value_counts()
 ageCountsPros2 = (ageCounts2 / ageCounts2.sum()) * 100
 AgeDFUsers = pd.concat([ageCounts2, ageCountsPros2], axis=1)
 
-# Histogram 3: Trip variation by month, week, and day
+# Histogram 4: Trip variation by month, week, and day
 manipulatedDF['Week'] = pd.DatetimeIndex(manipulatedDF['departure_time']).week
 manipulatedAllUsersDF['week'] = pd.DatetimeIndex(manipulatedAllUsersDF['departure_time']).week
 
@@ -166,7 +166,7 @@ weekdayPlot.set_xlabel('weekday (from Mon)', fontsize=35)
 weekdayPlot.set_xticklabels([1, 2, 3, 4, 5, 6, 7], fontsize=25)
 weekdayPlot.set_yticklabels([str(int(x)) for x in linePlot.get_yticks([])], fontsize=25)
 
-# Histogram 4: Trips per bike per day by month and week
+# Histogram 5: Trips per bike per day by month and week
 WeeklyTripCountPerBike = manipulatedAllUsersDF['id'].groupby(manipulatedAllUsersDF['week']).count().reset_index()
 WeeklyTripCountPerBike['id'] = WeeklyTripCountPerBike['id'] / 1400  # 1400 is the total number of bikes
 ExceptionWeeks = [22, 26, 31, 35, 39]  # the weeks that have only 6 days available in the data
@@ -199,7 +199,33 @@ b2.set_ylabel('Trip count day / bike', fontsize=30)
 b2.set_xticklabels(WeeklyTripCountPerBike.week, fontsize=23)
 b2.set_yticklabels([str(int(x)) for x in b2.get_yticks([])], fontsize=25)
 
-# Histogram 5: Trip time variation 
+# Histogram 6: Hourly trip count variation by gender
+hourlyTripGroupByGender = manipulatedDF.groupby(["DepHour", "hsl_gender", "WeekOrWeekend"]).count().reset_index()
+hourlyTripGroupByGender = hourlyTripGroupByGender.loc[(hourlyTripGroupByGender["hsl_gender"] == "male") | (hourlyTripGroupByGender["hsl_gender"] == "female")]
+
+hourlyTripGroupByWomen = hourlyTripGroupByGender.loc[hourlyTripGroupByGender["hsl_gender"] == "female"]
+hourlyTripGroupByMen = hourlyTripGroupByGender.loc[hourlyTripGroupByGender["hsl_gender"] == "male"]
+
+hourlyTripGroupByGender["genderWeekday"] = hourlyTripGroupByGender["hsl_gender"] + "_" + hourlyTripGroupByGender["WeekOrWeekend"].astype(str)
+hourlyTripGroupByGender["tripPercent"] = hourlyTripGroupByGender.apply(lambda row:(row["index"] / hourlyTripGroupByWomen["index"].sum())*100 if (row["hsl_gender"] == "female") else (row["index"] / hourlyTripGroupByMen["index"].sum())*100, axis = 1)
+ax = sns.lineplot(y = "tripPercent", x = "DepHour", hue = "genderWeekday", data =  hourlyTripGroupByGender)
+ax.xaxis.set_major_locator(plticker.MultipleLocator(1))
+plt.tight_layout()
+plt.show()
+
+# Histogram 7: Hourly trip count variation by home area
+hourlyTripGroupByHomeArea = manipulatedDF.groupby(["DepHour", "InsideArea", "WeekOrWeekend"]).count().reset_index()
+hourlyTripGroupByHomeArea = hourlyTripGroupByHomeArea.loc[(hourlyTripGroupByHomeArea["InsideArea"] == 0) | (hourlyTripGroupByHomeArea["InsideArea"] == 1)]
+
+hourlyTripGroupByInsideUsers = hourlyTripGroupByHomeArea.loc[hourlyTripGroupByHomeArea["InsideArea"] == 1]
+hourlyTripGroupByOutsideUsers = hourlyTripGroupByHomeArea.loc[hourlyTripGroupByHomeArea["InsideArea"] == 0]
+
+hourlyTripGroupByHomeArea["homeAreaWeekday"] = hourlyTripGroupByHomeArea["InsideArea"].astype(str) + "_" + hourlyTripGroupByHomeArea["WeekOrWeekend"].astype(str)
+hourlyTripGroupByHomeArea["tripPercent"] = hourlyTripGroupByHomeArea.apply(lambda row:(row["index"] / hourlyTripGroupByInsideUsers["index"].sum())*100 if (row["InsideArea"] == 1) else (row["index"] / hourlyTripGroupByOutsideUsers["index"].sum())*100, axis = 1)
+ax = sns.lineplot(y = "tripPercent", x = "DepHour", hue = "homeAreaWeekday", data =  hourlyTripGroupByHomeArea)
+
+
+# Histogram 7: Trip time variation
 manipulatedDF['duration_group'] = manipulatedDF.duration.map(
     lambda duration: (duration / 60))  # create the age by decade column
 manipulatedDF['duration_group'] = manipulatedDF.duration_group.map(
@@ -226,7 +252,7 @@ SeasonTypeByTrip = manipulatedAllUsersDF['formula'].value_counts()
 SeasonTypeByUser = manipulatedAllUsersDF['uid'].groupby(manipulatedAllUsersDF['formula']).nunique()
 SeasonTypeByTrip.plot()
 
-# Histogram 6 Showing the histogram for trip count, tripsPerDay and the number of unique trip days columns
+# Histogram 8 Showing the histogram for trip count, tripsPerDay and the number of unique trip days columns
 CombinedUserGroup['trip_count'].describe()
 CombinedUserGroup['tripsPerDay'].describe()
 CombinedUserGroup['DayOfTheYear_nunique'].describe()
