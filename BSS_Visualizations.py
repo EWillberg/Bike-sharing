@@ -272,12 +272,31 @@ plt.xticks(np.arange(0, 24, step=1))
 plt.show()
 
 # Lineplot 5: Hourly trip count variation by use activity
-hourlyTripGroupByUseActivity = manipulatedAllUsersDF.groupby(["DepHour", "WeekOrWeekend"]).count().reset_index()
+AllUsersCombinedUserGroup.sort_values('trip_count', ascending=False, inplace=True)
+q = pd.qcut(AllUsersCombinedUserGroup["trip_count"], 4)
+AllUsersCombinedUserGroup['ActivityQ'] = q
 
-hourlyTripGroupByUseActivity.sort_values('index', ascending=False, inplace=True)
-q = pd.qcut(hourlyTripGroupByUseActivity["index"], 5)
-hourlyTripGroupByUseActivity['ActivityQ'] = q
+manipulatedAllUsersDF_merge=manipulatedAllUsersDF.merge(AllUsersCombinedUserGroup,left_on="uid",right_on="uid")
 
+hourlyTripGroupByUseActivity = manipulatedAllUsersDF_merge.groupby(["DepHour","ActivityQ", "WeekOrWeekend"]).count().reset_index()
+
+hourlyTripGroupByActivityQ1 = hourlyTripGroupByUseActivity.loc[hourlyTripGroupByUseActivity["ActivityQ"].astype(str) == "(0.999, 6.0]"]
+hourlyTripGroupByActivityQ2 = hourlyTripGroupByUseActivity.loc[hourlyTripGroupByUseActivity["ActivityQ"].astype(str) == "(6.0, 18.0]"]
+hourlyTripGroupByActivityQ3 = hourlyTripGroupByUseActivity.loc[hourlyTripGroupByUseActivity["ActivityQ"].astype(str) == "(18.0, 46.0]"]
+hourlyTripGroupByActivityQ4 = hourlyTripGroupByUseActivity.loc[hourlyTripGroupByUseActivity["ActivityQ"].astype(str) == "(46.0, 1124.0]"]
+
+hourlyTripGroupByUseActivity["useActivityWeekday"] = hourlyTripGroupByUseActivity["ActivityQ"].astype(str) + "_" + hourlyTripGroupByUseActivity["WeekOrWeekend"].astype(str)
+
+hourlyTripGroupByUseActivity["tripPercent"] = hourlyTripGroupByUseActivity.apply(lambda row:(row["index"] / hourlyTripGroupByActivityQ1["index"].sum())*100
+                                            if str(row["ActivityQ"]) == "(0.999, 6.0]"
+                                            else ((row["index"] / hourlyTripGroupByActivityQ2["index"].sum())*100
+                                                                           if str(row["ActivityQ"]) == "(6.0, 18.0]"
+                                                                           else ((row["index"] / hourlyTripGroupByActivityQ3["index"].sum())*100
+                                                                                                    if str(row["ActivityQ"]) == "(18.0, 46.0]"
+                                                                                                    else ((row["index"] / hourlyTripGroupByActivityQ4["index"].sum())*100))), axis = 1)
+
+ax = sns.lineplot(y = "tripPercent", x = "DepHour", hue = "useActivityWeekday", data =  hourlyTripGroupByUseActivity, palette =["coral", "coral", "c" ,"c", "k", "k", "forestgreen", "forestgreen"], style = "WeekOrWeekend")
+plt.xticks(np.arange(0, 24, step=1))
 
 # Histogram 6: Trip time variation
 manipulatedDF['duration_group'] = manipulatedDF.duration.map(
