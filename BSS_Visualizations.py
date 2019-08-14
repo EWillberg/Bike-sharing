@@ -113,9 +113,9 @@ menTripCount = menTripCount.append(pd.Series([0]), ignore_index=True)
 combinedDF = pd.DataFrame(list(zip(ageGroup, womenPop, menPop, womenTripCount, menTripCount)), columns = ["age", "womenPopPros", "menPopPros", "womenTripCountPros", "menTripCountPros"])
 
 fig = plt.figure()
-ax = combinedDF[['womenTripCountPros', "menTripCountPros"]].plot(kind='bar', use_index=True, alpha = 0.8, color = ["orange", "blue"])
+ax = combinedDF[['womenTripCountPros', "menTripCountPros"]].plot(kind='bar', use_index=True, alpha = 0.8)
 ax2 = ax.twiny()
-ax2.plot(combinedDF[["womenPopPros", "menPopPros"]].values, linestyle='--', marker='o', linewidth=2.5, color = ["orange", "blue"])
+ax2.plot(combinedDF[["womenPopPros", "menPopPros"]].values, linestyle='--', marker='o', linewidth=2.5)
 ax2.tick_params(top=False, labeltop=False, left=False, labelleft=False, right=False, labelright=False, bottom=False, labelbottom=False)
 ax2.grid(False)
 
