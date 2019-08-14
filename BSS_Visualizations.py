@@ -33,11 +33,13 @@ ManipulatedDF_path = 'C:\HY-Data\ELWI\BikeSharingData\Processed2017\CSV\Processe
 ManipulatedAllUsersDF_path = 'C:\HY-Data\ELWI\BikeSharingData\Processed2017\CSV\ProcessedData_Full_season\BSS_Full_season_1_49m_Loops_RoundTrips_Included.csv'
 CombinedUserGroup_path = 'Z:\Gradu\Data\CSV\ProcessedData_Full_season\BSS_Full_season_UsersNewVersion.csv'
 AllUsersCombinedUserGroup_path = "Z:\Gradu\Data\CSV\ProcessedData_Full_season\BSS_Full_season_ALLUsersNewVersion.csv"
+PopulationByAgeGroupHelsinki = "Z:\Gradu\Data\Excel\VaestoHelsinki.csv"
 
 CombinedUserGroup = pd.read_csv(CombinedUserGroup_path, sep=",", encoding="utf8");
 AllUsersCombinedUserGroup = pd.read_csv(AllUsersCombinedUserGroup_path, sep=",", encoding="utf8");
 manipulatedDF = pd.read_csv(ManipulatedDF_path, sep=",", encoding="utf8");
 manipulatedAllUsersDF = pd.read_csv(ManipulatedAllUsersDF_path, sep=",", encoding="utf8");
+popHelsinki = pd.read_csv(PopulationByAgeGroupHelsinki, sep=";", encoding="utf8");
 
 """
 manipulatedDF= pd.read_csv(ManipulatedDF_path, sep = ",", encoding  ="utf8");
@@ -80,9 +82,11 @@ h1.set_xticklabels(
 manipulatedDF['hsl_gender'].replace('none', np.nan, inplace=True)  # change none values to nan
 manipulatedDF['age_dec'] = manipulatedDF.hsl_age.map(
     lambda hsl_age: 5 * (hsl_age // 5))  # create the age by decade column
+Over15_DF = manipulatedDF.loc[manipulatedDF["age_dec"] >= 15]
+getCountsByGenderAndAge = Over15_DF.groupby(["age_dec", "hsl_gender"]).count().reset_index()
+
 plt.figure();
-getCountsByGenderAndAge = manipulatedDF.groupby(["age_dec", "hsl_gender"]).count()
-h2 = sns.countplot(x="age_dec", hue="hsl_gender", data=manipulatedDF, palette=["skyblue", "palevioletred"])
+h2 = sns.countplot(x="age_dec", hue="hsl_gender", data=Over15_DF, palette=["skyblue", "palevioletred"])
 h2.axes.set_title("", fontsize=17, wrap=True, y=1.04)
 h2.set_xlabel("Age group", fontsize=14, fontname="Verdana")
 h2.set_ylabel("Trip count", fontsize=14, fontname="Verdana")
@@ -92,7 +96,42 @@ h2.text(12, 90000, "Males: 59.9 %", size=13, fontname="Verdana")  # male_count =
 h2.text(12, 83000, "Females: 40.1 %", size=13, fontname="Verdana")  # male_count = 547 116, female_count = 366 315
 
 h2.set_xticklabels(
-    labels=["0", "5", "15", "20", "25", "30", "35", "40", "45", "50", "55", "60", "65", "70", "75", "80", "85", "90"],
+    labels=["15", "20", "25", "30", "35", "40", "45", "50", "55", "60", "65", "70", "75", "80", "85", "90"],
+    fontname="Verdana")
+
+# Histogram 3: Trip count by age and gender + Helsinki demographics included
+getCountsByGenderAndAge["normTripCount"] = getCountsByGenderAndAge["index"] / getCountsByGenderAndAge["index"].sum()*100
+popHelsinki["normPopCount"] = popHelsinki["Pop"] / popHelsinki["Pop"].sum()*100
+
+ageGroup = popHelsinki["Age"].where(popHelsinki["Gender"] == "female").dropna()
+womenPop = popHelsinki["normPopCount"].where(popHelsinki["Gender"] == "female").dropna()
+menPop = popHelsinki["normPopCount"].where(popHelsinki["Gender"] == "male").dropna()
+womenTripCount = getCountsByGenderAndAge["normTripCount"].where(getCountsByGenderAndAge["hsl_gender"] == "female").dropna()
+womenTripCount = womenTripCount.append(pd.Series([0,0,0]), ignore_index=True)
+menTripCount = getCountsByGenderAndAge["normTripCount"].where(getCountsByGenderAndAge["hsl_gender"] == "male").dropna()
+menTripCount = menTripCount.append(pd.Series([0]), ignore_index=True)
+combinedDF = pd.DataFrame(list(zip(ageGroup, womenPop, menPop, womenTripCount, menTripCount)), columns = ["age", "womenPopPros", "menPopPros", "womenTripCountPros", "menTripCountPros"])
+
+fig = plt.figure()
+ax = combinedDF[['womenTripCountPros', "menTripCountPros"]].plot(kind='bar', use_index=True, alpha = 0.8, color = ["orange", "blue"])
+ax2 = ax.twiny()
+ax2.plot(combinedDF[["womenPopPros", "menPopPros"]].values, linestyle='--', marker='o', linewidth=2.5, color = ["orange", "blue"])
+ax2.tick_params(top=False, labeltop=False, left=False, labelleft=False, right=False, labelright=False, bottom=False, labelbottom=False)
+ax2.grid(False)
+
+    # Get the lines to shade the area under line
+l1 = ax2.lines[0]
+l2 = ax2.lines[1]
+
+    # Get the xy data from the lines so that we can shade
+x1 = l1.get_xydata()[:,0]
+y1 = l1.get_xydata()[:,1]
+x2 = l2.get_xydata()[:,0]
+y2 = l2.get_xydata()[:,1]
+ax.fill_between(x1,y1, color="gray", alpha=0.35)
+ax.fill_between(x2,y2, color="gray", alpha=0.35)
+ax.set_xticklabels(
+    labels=["15", "20", "25", "30", "35", "40", "45", "50", "55", "60", "65", "70", "75", "80", "85", "90"],
     fontname="Verdana")
 
 # Age variation tables (only those columns included where gender is present to match the table results with histograms 1 and 2)
@@ -265,7 +304,6 @@ hourlyTripGroupByFormula["tripPercent"] = hourlyTripGroupByFormula.apply(lambda 
                                             else ((row["index"] / hourlyTripGroupByWeekUsers["index"].sum())*100
                                                                            if row["formula"] == "Week"
                                                                            else ((row["index"] / hourlyTripGroupByYearUsers["index"].sum())*100)), axis = 1)
-
 
 ax = sns.lineplot(y = "tripPercent", x = "DepHour", hue = "formulaWeekday", data =  hourlyTripGroupByFormula, palette =["coral", "coral", "c" ,"c", "k", "k"], style = "WeekOrWeekend")
 plt.xticks(np.arange(0, 24, step=1))
