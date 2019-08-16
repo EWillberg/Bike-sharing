@@ -21,6 +21,8 @@ from matplotlib import dates
 import matplotlib.ticker as plticker
 from scipy.cluster.hierarchy import dendrogram, linkage
 import datetime as dt
+from matplotlib.legend import Legend
+
 
 # Set visulization style to Seaborn 
 sns.set()
@@ -129,28 +131,29 @@ combinedUserDF = pd.DataFrame(list(zip(ageGroup, womenPop, menPop, womenUserCoun
 
 fig = plt.figure()
 ax = combinedUserDF[["menUserCountPros", 'womenUserCountPros']].plot(kind='bar', use_index=True, alpha=0.8)
+ax.legend(['Bike sharing users: Men', 'Bike sharing users: Women'],bbox_to_anchor=(1, 1), fontsize = 30, frameon=False)
 ax2 = ax.twiny()
 ax2.plot(combinedUserDF[["menPopPros", "womenPopPros"]].values, linestyle='--', marker='o', linewidth=2.5)
 ax2.tick_params(top=False, labeltop=False, left=False, labelleft=False, right=False, labelright=False, bottom=False,
                 labelbottom=False)
+ax2.legend(['Total Helsinki population: Men', 'Total Helsinki population: Women'], bbox_to_anchor=(1, 0.75), fontsize = 30, frameon=False)
 ax2.grid(False)
 
-# Get the lines to shade the area under line
-l1 = ax2.lines[0]
+l1 = ax2.lines[0] # Get the lines to shade the area under line
 l2 = ax2.lines[1]
 
-# Get the xy data from the lines so that we can shade
-x1 = l1.get_xydata()[:, 0]
+x1 = l1.get_xydata()[:, 0] # Get the xy data from the lines so that we can shade
 y1 = l1.get_xydata()[:, 1]
 x2 = l2.get_xydata()[:, 0]
 y2 = l2.get_xydata()[:, 1]
 ax.fill_between(x1, y1, color="gray", alpha=0.35)
 ax.fill_between(x2, y2, color="gray", alpha=0.35)
+ax.set_ylabel("Share of total (%)", fontsize=30)
+ax.tick_params(axis='y', which='major', labelsize=30)
 ax.set_xticklabels(
     labels=["15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74",
             "75-79", "80-84", "85-89", ">90"],
-    fontname="Verdana")
-
+    fontname="Verdana", fontsize="24")
 
 # Histogram 4: Trip count by age and gender with Helsinki demographics included
 getTripCountsByGenderAndAge = Over15_DF.groupby(["age_dec", "hsl_gender"]).count().reset_index()
@@ -172,11 +175,14 @@ combinedTripDF = pd.DataFrame(list(zip(ageGroup, womenPop, menPop, womenTripCoun
 
 fig = plt.figure()
 ax = combinedTripDF[["menTripCountPros", 'womenTripCountPros']].plot(kind='bar', use_index=True, alpha=0.8, width = 0.85)
+ax.legend(['Bike sharing trips: Men', 'Bike sharing trips: Women'],bbox_to_anchor=(1, 1), fontsize = 30, frameon=False)
 ax2 = ax.twiny()
 ax2.plot(combinedTripDF[["menPopPros", "womenPopPros"]].values, linestyle='--', marker='o', linewidth=2.5)
 ax2.tick_params(top=False, labeltop=False, left=False, labelleft=False, right=False, labelright=False, bottom=False,
                 labelbottom=False)
+ax2.legend(['Total Helsinki population: Men', 'Total Helsinki population: Women'], bbox_to_anchor=(1, 0.75), fontsize = 30, frameon=False)
 ax2.grid(False)
+
 
 # Get the lines to shade the area under line
 l1 = ax2.lines[0]
@@ -189,10 +195,13 @@ x2 = l2.get_xydata()[:, 0]
 y2 = l2.get_xydata()[:, 1]
 ax.fill_between(x1, y1, color="gray", alpha=0.35)
 ax.fill_between(x2, y2, color="gray", alpha=0.35)
+ax.set_ylabel("Share of total (%)", fontsize=30)
+ax.tick_params(axis='y', which='major', labelsize=30)
 ax.set_xticklabels(
     labels=["15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74",
             "75-79", "80-84", "85-89", ">90"],
-    fontname="Verdana")
+    fontname="Verdana", fontsize="24")
+
 
 # Donut plot 1 : Home area chart
 """
@@ -210,23 +219,22 @@ Total population in Helsinki inside/outside the BSS station area
 1 269047 -> 39.98
 0 403920 +> 60.02
 """
-
-size_of_groups = [79.17, 20.83]
-size_of_groups2 = [69.37, 30.64]
-size_of_groups3 = [39.98, 60.02]
+size_of_HomeAreaGroups = [79.17, 20.83]
+size_of_HomeAreaGroups2 = [69.37, 30.64]
+size_of_HomeAreaGroups3 = [39.98, 60.02]
 
 cmap = plt.get_cmap("tab20b")
 colors = cmap(np.array([1, 14]))
 labels = ["Population in Helsinki living \ninside BSS coverage area", "Population in Helsinki living \noutside BSS coverage area"]
 
 fig, ax = plt.subplots()
-ax.pie(size_of_groups, radius=1, colors=colors,
+ax.pie(size_of_HomeAreaGroups, radius=1, colors=colors,
        wedgeprops=dict(width=0.2, edgecolor='w'), autopct='%1.0f%%', pctdistance=1.13,
        textprops={'fontsize': 30, "fontweight": "bold"})
-ax.pie(size_of_groups2, radius=0.8, colors=colors,
+ax.pie(size_of_HomeAreaGroups2, radius=0.8, colors=colors,
        wedgeprops=dict(width=0.2, edgecolor='w'), autopct='%1.0f%%', pctdistance=0.88,
        textprops={'fontsize': 30, "color": "white", "fontweight": "bold"})
-ax.pie(size_of_groups3, radius=0.6, colors=colors,
+ax.pie(size_of_HomeAreaGroups3, radius=0.6, colors=colors,
        wedgeprops=dict(width=0.2, edgecolor='w'), autopct='%1.0f%%', pctdistance=0.45,
        textprops={'fontsize': 30, "fontweight": "bold"})
 plt.legend(labels, title="Outermost ring = BSS trips  \nMiddle ring = BSS users "
@@ -235,12 +243,33 @@ plt.legend(labels, title="Outermost ring = BSS trips  \nMiddle ring = BSS users 
 ax.get_legend().get_title().set_fontsize('24')
 ax.set(aspect="equal")
 
-
 plt.show()
 
 # Donut plot 2 : Subscription type
+"""
+In [230]: manipulatedAllUsersDF["formula"].value_counts()
+Out[230]: 
+Year    1375583 -> 91.90%
+Day       78711 -> 5.26%
+Week      42522 -> 2.84%
+"""
 
+size_of_SubscriptionGroups = [2.84, 5.26, 91.90]
 
+cmap = plt.get_cmap("tab20b")
+colors = cmap(np.array([11, 5,13]))
+labels = ["Day", "Week", "Year"]
+
+fig, ax = plt.subplots()
+ax.pie(size_of_SubscriptionGroups, radius=1, colors=colors,
+       wedgeprops=dict(width=0.4, edgecolor='w'), autopct='%1.0f%%', pctdistance=1.13,
+       textprops={'fontsize': 30, "fontweight": "bold"})
+plt.legend(labels, title="User's subscription\ntype",
+           bbox_to_anchor=(1, 0.9), fontsize = 24)
+ax.get_legend().get_title().set_fontsize('24')
+ax.set(aspect="equal")
+
+plt.show()
 
 # Histogram 4: Trip variation by month, week, and day
 manipulatedDF['Week'] = pd.DatetimeIndex(manipulatedDF['departure_time']).week
@@ -351,6 +380,8 @@ hourlyTripGroupByGender["tripPercent"] = hourlyTripGroupByGender.apply(
                                                                                                                                  hourlyTripGroupByMen[
                                                                                                                                      "index"].sum()) * 100,
     axis=1)
+
+fig, axes = plt.subplots(3,2)
 ax = sns.lineplot(y="tripPercent", x="DepHour", hue="genderWeekday", data=hourlyTripGroupByGender,
                   palette=["coral", "coral", "navy", "navy"], style="WeekOrWeekend")
 plt.xticks(np.arange(0, 24, step=1))
@@ -370,6 +401,9 @@ hourlyTripGroupByHomeArea["tripPercent"] = hourlyTripGroupByHomeArea.apply(
     lambda row: (row["index"] / hourlyTripGroupByInsideUsers["index"].sum()) * 100
     if (row["InsideArea"] == 1)
     else (row["index"] / hourlyTripGroupByOutsideUsers["index"].sum()) * 100, axis=1)
+
+fig, axes = plt.subplots(3,2)
+
 ax = sns.lineplot(y="tripPercent", x="DepHour", hue="homeAreaWeekday", data=hourlyTripGroupByHomeArea,
                   palette=["coral", "coral", "navy", "navy"], style="WeekOrWeekend")
 plt.xticks(np.arange(0, 24, step=1))
@@ -399,6 +433,8 @@ hourlyTripGroupByAgeGroup["tripPercent"] = hourlyTripGroupByAgeGroup.apply(
           else ((row["index"] / hourlyTripGroupByAge_41_60["index"].sum()) * 100
                 if row["age_dec"] == 40
                 else ((row["index"] / hourlyTripGroupByAge_61_80["index"].sum()) * 100))), axis=1)
+
+fig, axes = plt.subplots(3,2)
 
 ax = sns.lineplot(y="tripPercent", x="DepHour", hue="ageGroupWeekday", data=hourlyTripGroupByAgeGroup,
                   palette=["coral", "coral", "c", "c", "k", "k", "forestgreen", "forestgreen"], style="WeekOrWeekend")
@@ -463,6 +499,14 @@ hourlyTripGroupByUseActivity["tripPercent"] = hourlyTripGroupByUseActivity.apply
 ax = sns.lineplot(y="tripPercent", x="DepHour", hue="useActivityWeekday", data=hourlyTripGroupByUseActivity,
                   palette=["coral", "coral", "c", "c", "k", "k", "forestgreen", "forestgreen"], style="WeekOrWeekend")
 plt.xticks(np.arange(0, 24, step=1))
+
+# Combineation of lineplots 1-5 (see above)
+ax1 = plt.subplot2grid(shape=(2,6), loc=(0,0), colspan=2)
+ax2 = plt.subplot2grid((2,6), (0,2), colspan=2)
+ax3 = plt.subplot2grid((2,6), (0,4), colspan=2)
+ax4 = plt.subplot2grid((2,6), (1,1), colspan=2)
+ax5 = plt.subplot2grid((2,6), (1,3), colspan=2)
+plt._show
 
 # Histogram 6: Trip time variation
 manipulatedDF['duration_group'] = manipulatedDF.duration.map(
