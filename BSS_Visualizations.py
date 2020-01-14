@@ -29,11 +29,10 @@ sns.set()
 sns.set(font_scale=1.5)
 
 # Read data
-BSS_path = 'C:\HY-Data\ELWI\BikeSharingData\Processed2017\CSV\ProcessedData_Full_season\BSS2017_Full_season_with_DistanceDifference_1_49m.csv'
-ManipulatedDF_path = 'C:\HY-Data\ELWI\BikeSharingData\Processed2017\CSV\ProcessedData_Full_season\BSS_Full_season_1_34m_Loops_RoundTrips_Included.csv'
-ManipulatedAllUsersDF_path = 'C:\HY-Data\ELWI\BikeSharingData\Processed2017\CSV\ProcessedData_Full_season\BSS_Full_season_1_49m_Loops_RoundTrips_Included.csv'
-CombinedUserGroup_path = 'Z:\Gradu\Data\CSV\ProcessedData_Full_season\BSS_Full_season_UsersNewVersion.csv'
-AllUsersCombinedUserGroup_path = "Z:\Gradu\Data\CSV\ProcessedData_Full_season\BSS_Full_season_ALLUsersNewVersion.csv"
+ManipulatedDF_path = 'C:\LocalData\HY-Data\ELWI\BikeSharingData\Processed2017\CSV\ProcessedData_Full_season\BSS_Full_season_1_34m_Loops_RoundTrips_Included.csv'
+ManipulatedAllUsersDF_path = 'C:\LocalData\HY-Data\ELWI\BikeSharingData\Processed2017\CSV\ProcessedData_Full_season\BSS_Full_season_1_49m_Loops_RoundTrips_Included.csv'
+CombinedUserGroup_path = 'Z:\\2019\\2019_Gradu\\Data\\CSV\\ProcessedData_Full_season\\BSS_Full_season_UsersNewVersion.csv'
+AllUsersCombinedUserGroup_path = 'Z:\\2019\\2019_Gradu\\Data\\CSV\\ProcessedData_Full_season\\BSS_Full_season_ALLUsersNewVersion.csv'
 PopulationByAgeGroupHelsinki = "Z:\Gradu\Data\Excel\VaestoHelsinki.csv"
 
 CombinedUserGroup = pd.read_csv(CombinedUserGroup_path, sep=",", encoding="utf8");
@@ -112,10 +111,15 @@ ageCountsPros2 = (ageCounts2 / ageCounts2.sum()) * 100
 AgeDFUsers = pd.concat([ageCounts2, ageCountsPros2], axis=1)
 
 # Histogram 3: User count by age and gender with Helsinki demographics included
+CombinedUserGroup['age_dec'] = CombinedUserGroup.hsl_age.map(
+    lambda hsl_age: 5 * (hsl_age // 5))  # create the age by decade column
+
 over15_Users_DF = CombinedUserGroup.loc[CombinedUserGroup["age_dec"] >= 15]
 getUserCountsByGenderAndAge = over15_Users_DF.groupby(["age_dec", "hsl_gender"]).count().reset_index()
 getUserCountsByGenderAndAge["normUserCount"] = getUserCountsByGenderAndAge["uid"] / getUserCountsByGenderAndAge[
     "uid"].sum() * 100
+
+popHelsinki["normPopCount"] = popHelsinki["Pop"] / popHelsinki["Pop"].sum() * 100
 
 ageGroup = popHelsinki["Age"].where(popHelsinki["Gender"] == "female").dropna()
 womenPop = popHelsinki["normPopCount"].where(popHelsinki["Gender"] == "female").dropna()
@@ -128,15 +132,16 @@ menTripCount = getUserCountsByGenderAndAge["normUserCount"].where(
 menTripCount = menTripCount.append(pd.Series([0]), ignore_index=True)
 combinedUserDF = pd.DataFrame(list(zip(ageGroup, womenPop, menPop, womenUserCount, menTripCount)),
                               columns=["age", "womenPopPros", "menPopPros", "womenUserCountPros", "menUserCountPros"])
+sns.set_palette("deep")
 
 fig = plt.figure()
-ax = combinedUserDF[["menUserCountPros", 'womenUserCountPros']].plot(kind='bar', use_index=True, alpha=0.8)
-ax.legend(['Bike sharing users: Men', 'Bike sharing users: Women'], bbox_to_anchor=(1, 1), fontsize=30, frameon=False)
+ax = combinedUserDF[["menUserCountPros", 'womenUserCountPros']].plot(kind='bar', use_index=True, alpha=0.8, width=0.85)
+ax.legend(['Bike-sharing users: Male', 'Bik-sharing users: Female'], bbox_to_anchor=(1, 1), fontsize=30, frameon=False)
 ax2 = ax.twiny()
 ax2.plot(combinedUserDF[["menPopPros", "womenPopPros"]].values, linestyle='--', marker='o', linewidth=2.5)
 ax2.tick_params(top=False, labeltop=False, left=False, labelleft=False, right=False, labelright=False, bottom=False,
                 labelbottom=False)
-ax2.legend(['Total Helsinki population: Men', 'Total Helsinki population: Women'], bbox_to_anchor=(1, 0.75),
+ax2.legend(['Total Helsinki population: Male', 'Total Helsinki population: Female'], bbox_to_anchor=(1, 0.75),
            fontsize=30, frameon=False)
 ax2.grid(False)
 
@@ -176,12 +181,12 @@ combinedTripDF = pd.DataFrame(list(zip(ageGroup, womenPop, menPop, womenTripCoun
 
 fig = plt.figure()
 ax = combinedTripDF[["menTripCountPros", 'womenTripCountPros']].plot(kind='bar', use_index=True, alpha=0.8, width=0.85)
-ax.legend(['Bike sharing trips: Men', 'Bike sharing trips: Women'], bbox_to_anchor=(1, 1), fontsize=30, frameon=False)
+ax.legend(['Bike-sharing trips: Male', 'Bike-sharing trips: Female'], bbox_to_anchor=(1, 1), fontsize=30, frameon=False)
 ax2 = ax.twiny()
 ax2.plot(combinedTripDF[["menPopPros", "womenPopPros"]].values, linestyle='--', marker='o', linewidth=2.5)
 ax2.tick_params(top=False, labeltop=False, left=False, labelleft=False, right=False, labelright=False, bottom=False,
                 labelbottom=False)
-ax2.legend(['Total Helsinki population: Men', 'Total Helsinki population: Women'], bbox_to_anchor=(1, 0.75),
+ax2.legend(['Total Helsinki population: Male', 'Total Helsinki population: Female'], bbox_to_anchor=(1, 0.75),
            fontsize=30, frameon=False)
 ax2.grid(False)
 
@@ -201,7 +206,7 @@ ax.tick_params(axis='y', which='major', labelsize=30)
 ax.set_xticklabels(
     labels=["15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74",
             "75-79", "80-84", "85-89", ">90"],
-    fontname="Verdana", fontsize="24")
+    fontname="Verdana", fontsize="25")
 
 # Donut plot 1 : Home area chart
 """
@@ -224,7 +229,7 @@ size_of_HomeAreaGroups2 = [69.37, 30.64]
 size_of_HomeAreaGroups3 = [39.98, 60.02]
 
 cmap = plt.get_cmap("tab20b")
-colors = cmap(np.array([1, 14]))
+colors = cmap(np.array([0,13]))
 labels = ["Population in Helsinki living \ninside BSS coverage area",
           "Population in Helsinki living \noutside BSS coverage area"]
 
@@ -253,19 +258,30 @@ Out[230]:
 Year    1375583 -> 91.90%
 Day       78711 -> 5.26%
 Week      42522 -> 2.84%
+
+In [231]:AllUsersCombinedUserGroup["formula"].value_counts()
+Out[231]: 
+Year    33557 -> 82.43%
+Week     1614 -> 3.97%
+Day      5538 -> 13.60%
+
 """
 
-size_of_SubscriptionGroups = [2.84, 5.26, 91.90]
+size_of_SubscriptionGroups1 = [91.90, 5.26,2.84 ]
+size_of_SubscriptionGroups2 = [82.43, 3.97, 13.60]
 
 cmap = plt.get_cmap("tab20b")
-colors = cmap(np.array([11, 5, 13]))
-labels = ["Day", "Week", "Year"]
+colors = cmap(np.array([12, 1,10 ]))
+labels = ["Year", "Week", "Day"]
 
 fig, ax = plt.subplots()
-ax.pie(size_of_SubscriptionGroups, radius=1, colors=colors,
-       wedgeprops=dict(width=0.4, edgecolor='w'), autopct='%1.0f%%', pctdistance=1.13,
+ax.pie(size_of_SubscriptionGroups1, radius=1, colors=colors,
+       wedgeprops=dict(width=0.3, edgecolor='w'), autopct='%1.0f%%', pctdistance=1.13,
        textprops={'fontsize': 30, "fontweight": "bold"})
-plt.legend(labels, title="User's subscription\ntype",
+ax.pie(size_of_SubscriptionGroups2, radius=0.7, colors=colors,
+       wedgeprops=dict(width=0.3, edgecolor='w'), autopct='%1.0f%%', pctdistance=0.8,
+       textprops={'fontsize': 30,  "fontweight": "bold"})
+plt.legend(labels, title="Outer ring = BSS trips  \nInner ring = BSS users \n\nUser's subscription\ntype",
            bbox_to_anchor=(1, 0.9), fontsize=24)
 ax.get_legend().get_title().set_fontsize('24')
 ax.set(aspect="equal")
@@ -349,7 +365,7 @@ grid = plt.GridSpec(2, 3, wspace=0.4, hspace=0.3)
 monthlyHist = fig.add_subplot(grid[0, 0])
 weeklyHist = fig.add_subplot(grid[0, 1:])
 
-b1 = sns.barplot(x='Month', y='id', data=MonthlyTripCountPerBike, ax=monthlyHist, color='steelblue')
+b1 = sns.barplot(x='Month', y='id', data=MonthlyTripCountPerBike, ax=monthlyHist, color='B')
 b1.set_ylim(0, 10)
 b1.set_xlabel('Month (2017)', fontsize=30)
 b1.set_ylabel('Trip count day / bike', fontsize=30)
@@ -369,25 +385,28 @@ hourlyTripGroupByGender = manipulatedDF.groupby(["DepHour", "hsl_gender", "WeekO
 hourlyTripGroupByGender = hourlyTripGroupByGender.loc[
     (hourlyTripGroupByGender["hsl_gender"] == "male") | (hourlyTripGroupByGender["hsl_gender"] == "female")]
 
-hourlyTripGroupByWomen = hourlyTripGroupByGender.loc[hourlyTripGroupByGender["hsl_gender"] == "female"]
 hourlyTripGroupByMen = hourlyTripGroupByGender.loc[hourlyTripGroupByGender["hsl_gender"] == "male"]
+hourlyTripGroupByWomen = hourlyTripGroupByGender.loc[hourlyTripGroupByGender["hsl_gender"] == "female"]
 
 hourlyTripGroupByGender["genderWeekday"] = hourlyTripGroupByGender["hsl_gender"] + "_" + hourlyTripGroupByGender[
     "WeekOrWeekend"].astype(str)
 hourlyTripGroupByGender["tripPercent"] = hourlyTripGroupByGender.apply(
-    lambda row: (row["index"] / hourlyTripGroupByWomen["index"].sum()) * 100 if (row["hsl_gender"] == "female") else (
+    lambda row: (row["index"] / hourlyTripGroupByMen["index"].sum()) * 100 if (row["hsl_gender"] == "male") else (
                                                                                                                              row[
                                                                                                                                  "index"] /
-                                                                                                                             hourlyTripGroupByMen[
+                                                                                                                             hourlyTripGroupByWomen[
                                                                                                                                  "index"].sum()) * 100,
     axis=1)
 
 hourlyTripGroupByGender["Time of the week"] = hourlyTripGroupByGender.apply(lambda x: "weekday" if x["WeekOrWeekend"] == 1 else "weekend", axis = 1)
-hourlyTripGroupByGender['Gender'] = hourlyTripGroupByGender['hsl_gender'].map(({"male" : "Male", "female": "Female"}))
+hourlyTripGroupByGender['Gender'] = hourlyTripGroupByGender['hsl_gender'].map(({"female": "Female", "male" : "Male" }))
+
+deepColor = ["#4C72B0", "#DD8452", "#55A868", "#C44E52", "#8172B3", "#937860", "#DA8BC3", "#8C8C8C", "#CCB974", "#64B5CD"]
+newPalette = dict(Female = deepColor[1], Male = deepColor[0])
 
 ax = sns.lineplot(y="tripPercent", x="DepHour", hue="Gender", data=hourlyTripGroupByGender,
-                  style="Time of the week")
-sns.set_context("poster", rc={"grid.linewidth": 0.6})
+                  style="Time of the week  ", palette = newPalette, linewidth=5.0)
+sns.set_context("poster", rc={"lines.linewidth": 5.5})
 plt.xticks(np.arange(0, 24, step=1))
 ax.set_xlabel('Departure hour', fontsize=30)
 ax.set_ylabel('Share of total (%)', fontsize=30)
@@ -395,7 +414,6 @@ ax.tick_params(axis='both', which='major', labelsize=30)
 plt.setp(ax.get_legend().get_texts(), fontsize='25') # for legend text
 
 plt.show()
-
 
 # Lineplot 2: Hourly trip count variation by home area
 hourlyTripGroupByHomeArea = manipulatedDF.groupby(["DepHour", "InsideArea", "WeekOrWeekend"]).count().reset_index()
@@ -415,8 +433,11 @@ hourlyTripGroupByHomeArea["tripPercent"] = hourlyTripGroupByHomeArea.apply(
 hourlyTripGroupByHomeArea["Time of the week"] = hourlyTripGroupByHomeArea.apply(lambda x: "weekday" if x["WeekOrWeekend"] == 1 else "weekend", axis = 1)
 hourlyTripGroupByHomeArea['Home area within \nBSS coverage area'] = hourlyTripGroupByHomeArea['InsideArea'].map(({0 : "No", 1: "Yes"}))
 
+cmap = plt.get_cmap("tab20b")
+colors = cmap(np.array([13,0]))
+
 ax = sns.lineplot(y="tripPercent", x="DepHour", hue="Home area within \nBSS coverage area", data=hourlyTripGroupByHomeArea,
-                  style="Time of the week")
+                  style="Time of the week", linewidth=5.0, palette = colors)
 sns.set_context("poster", rc={"grid.linewidth": 0.6})
 plt.xticks(np.arange(0, 24, step=1))
 ax.set_xlabel('Departure hour', fontsize=30)
@@ -455,7 +476,7 @@ hourlyTripGroupByAgeGroup["Time of the week"] = hourlyTripGroupByAgeGroup.apply(
 hourlyTripGroupByAgeGroup['Age group'] = hourlyTripGroupByAgeGroup['age_dec'].map(({0 : "0-19", 20: "20-39",40: "40-59", 60:"60-79"}))
 
 ax = sns.lineplot(y="tripPercent", x="DepHour", hue="Age group", data=hourlyTripGroupByAgeGroup,
-                   style="Time of the week")
+                   style="Time of the week", linewidth = 5.0)
 sns.set_context("poster", rc={"grid.linewidth": 0.6})
 plt.xticks(np.arange(0, 24, step=1))
 ax.set_xlabel('Departure hour', fontsize=30)
@@ -487,8 +508,11 @@ hourlyTripGroupByFormula["tripPercent"] = hourlyTripGroupByFormula.apply(
 hourlyTripGroupByFormula.rename(columns={"formula":"Subscription type"}, inplace=True)
 hourlyTripGroupByFormula["Time of the week"] = hourlyTripGroupByFormula.apply(lambda x: "weekday" if x["WeekOrWeekend"] == 1 else "weekend", axis = 1)
 
+cmap = plt.get_cmap("tab20b")
+colors = cmap(np.array([10,1,4 ]))
+
 ax = sns.lineplot(y="tripPercent", x="DepHour", hue="Subscription type", data=hourlyTripGroupByFormula,
-                  style="Time of the week")
+                  style="Time of the week", linewidth = 5.0, palette = colors)
 sns.set_context("poster", rc={"grid.linewidth": 0.6})
 plt.xticks(np.arange(0, 24, step=1))
 ax.set_xlabel('Departure hour', fontsize=30)
@@ -538,7 +562,7 @@ hourlyTripGroupByUseActivity['Trip count by user \n(quintile)'] = hourlyTripGrou
 hourlyTripGroupByUseActivity["Time of the week"] = hourlyTripGroupByUseActivity.apply(lambda x: "weekday" if x["WeekOrWeekend"] == 1 else "weekend", axis = 1)
 
 ax = sns.lineplot(y="tripPercent", x="DepHour", hue="Trip count by user \n(quintile)", data=hourlyTripGroupByUseActivity,
-                  style="Time of the week")
+                  style="Time of the week", linewidth =5.0)
 sns.set_context("poster", rc={"grid.linewidth": 0.6})
 plt.xticks(np.arange(0, 24, step=1))
 ax.set_xlabel('Departure hour', fontsize=30)
@@ -575,42 +599,44 @@ SeasonTypeByUser = manipulatedAllUsersDF['uid'].groupby(manipulatedAllUsersDF['f
 SeasonTypeByTrip.plot()
 
 # Histogram 8 Showing the histogram for trip count, tripsPerDay and the number of unique trip days columns
-CombinedUserGroup['trip_count'].describe()
-CombinedUserGroup['tripsPerDay'].describe()
-CombinedUserGroup['DayOfTheYear_nunique'].describe()
+AllUsersCombinedUserGroup['trip_count'].describe()
+AllUsersCombinedUserGroup['tripsPerDay'].describe()
+AllUsersCombinedUserGroup['DayOfTheYear_nunique'].describe()
 
 fig = plt.figure(figsize=(12, 3))
 grid = plt.GridSpec(1, 3, wspace=0.4, hspace=0.2)
 
 tripCountHist = fig.add_subplot(grid[0, 0])
-tripCountHist.hist(CombinedUserGroup['trip_count'], range=(0, 400), bins=20)
-tripCountHist.set_xlabel('Trip count', fontsize=20)
-tripCountHist.set_ylabel('User count', fontsize=20)
-tripCountHist.text(250, 4000, "mean: 38.3 \nstd: 46.3 \nmin: 1 \n25%: 8 \n50%: 22 \n75% 50 \nmax: 1124", size=15,
+tripCountHist.hist(AllUsersCombinedUserGroup['trip_count'], range=(0, 400), bins=20)
+tripCountHist.set_xlabel('Trip count', fontsize=35)
+tripCountHist.set_ylabel('User count', fontsize=35)
+tripCountHist.tick_params(axis='x', which='major', labelsize=30)
+tripCountHist.text(160, 4000, "mean: 34.8 \nstd: 44.9 \nmin: 1 \n25%: 6 \n50%: 18 \n75% 46 \nmax: 1124", size=25,
                    fontname="Verdana", weight="bold")
 
 tripsPerDayHist = fig.add_subplot(grid[0, 1])
-tripsPerDayHist.hist(CombinedUserGroup['DayOfTheYear_nunique'], range=(0, 160), bins=20, color="darkslategray")
-tripsPerDayHist.set_xlabel('Unique user days', fontsize=20)
-tripsPerDayHist.set_ylabel('User count', fontsize=20)
-tripsPerDayHist.text(100, 3000, "mean: 22.6 \nstd: 23.0 \nmin: 1 \n25%: 6 \n50%: 15 \n75% 32 \nmax: 158", size=15,
+tripsPerDayHist.hist(AllUsersCombinedUserGroup['DayOfTheYear_nunique'], range=(0, 200), bins=20, color="darkslategray")
+tripsPerDayHist.set_xlabel('Unique user days', fontsize=35)
+tripsPerDayHist.set_ylabel('User count', fontsize=35)
+tripsPerDayHist.tick_params(axis='x', which='both', labelsize=30)
+tripsPerDayHist.text(75, 3500, "mean: 20.1 \nstd: 22.6 \nmin: 1 \n25%: 3 \n50%: 12 \n75% 29 \nmax: 158", size=25,
                      fontname="Verdana", weight="bold")
 
 tripsPerDayHist = fig.add_subplot(grid[0, 2])
-tripsPerDayHist.hist(CombinedUserGroup['tripsPerDay'], range=(0, 3), bins=20, color="indianred")
-tripsPerDayHist.set_xlabel('Trips per day ', fontsize=20)
-tripsPerDayHist.set_ylabel('User count', fontsize=20)
-tripsPerDayHist.text(2.0, 5000, "mean: 0.22 \nstd: 0.26 \nmin: 0.005 \n25%: 0.05 \n50%: 0.13 \n75% 0.29 \nmax: 6.42",
+tripsPerDayHist.hist(AllUsersCombinedUserGroup['tripsPerDay'], range=(0, 3), bins=20, color="indianred")
+tripsPerDayHist.set_xlabel('Trips per day ', fontsize=25)
+tripsPerDayHist.set_ylabel('User count', fontsize=25)
+tripsPerDayHist.text(2.0, 5000, "mean: 0.20 \nstd: 0.26 \nmin: 0.005 \n25%: 0.03 \n50%: 0.10 \n75% 0.26 \nmax: 6.42",
                      size=15, fontname="Verdana", weight="bold")
 
-CombinedUserGroup['PT_trip_pros'].hist(bins=20)
-CombinedUserGroup['userDayRatio'].hist(bins=20)
-CombinedUserGroup['userDayCount'].hist(bins=20)
+AllUsersCombinedUserGroup['PT_trip_pros'].hist(bins=20)
+AllUsersCombinedUserGroup['userDayRatio'].hist(bins=20)
+AllUsersCombinedUserGroup['userDayCount'].hist(bins=20)
 
 # Cumulative trip count plot: 
-CombinedUserGroup.sort_values('trip_count', ascending=False, inplace=True)
-CombinedUserGroup['cum_sum'] = CombinedUserGroup.trip_count.cumsum()
-CombinedUserGroup['cum_perc'] = 100 * CombinedUserGroup.cum_sum / CombinedUserGroup.trip_count.sum()
+AllUsersCombinedUserGroup.sort_values('trip_count', ascending=False, inplace=True)
+AllUsersCombinedUserGroup['cum_sum'] = AllUsersCombinedUserGroup.trip_count.cumsum()
+AllUsersCombinedUserGroup['cum_perc'] = 100 * AllUsersCombinedUserGroup.cum_sum / AllUsersCombinedUserGroup.trip_count.sum()
 
 sns.set(font_scale=2.1)
 
@@ -619,25 +645,26 @@ ax = fig.add_subplot(111)
 ax.set_xlabel('Cumulative percentage of users % ', fontsize=35)
 ax.set_ylabel('Cumulative percentage of trips %', fontsize=35)
 
-CombinedUserGroup = CombinedUserGroup.sort_values('cum_sum', ascending=True)
-CombinedUserGroup['seq'] = range(1, len(CombinedUserGroup) + 1)
-CombinedUserGroup['user_perc'] = 100 * CombinedUserGroup.seq / len(CombinedUserGroup.seq)
+AllUsersCombinedUserGroup = AllUsersCombinedUserGroup.sort_values('cum_sum', ascending=True)
+AllUsersCombinedUserGroup['seq'] = range(1, len(AllUsersCombinedUserGroup) + 1)
+AllUsersCombinedUserGroup['user_perc'] = 100 * AllUsersCombinedUserGroup.seq / len(AllUsersCombinedUserGroup.seq)
 
-ax.plot(CombinedUserGroup['user_perc'], CombinedUserGroup['cum_perc'])
+ax.plot(AllUsersCombinedUserGroup['user_perc'], AllUsersCombinedUserGroup['cum_perc'], linewidth = 6.0)
+ax.tick_params(axis='both', which='major', labelsize=30)
 percentage = 0.2
 while percentage < 1.1:
-    point = int(round(len(CombinedUserGroup) * percentage, 0))
-    ax.text(CombinedUserGroup.iloc[point]["user_perc"], CombinedUserGroup.iloc[point]["cum_perc"],
-            "User count: %s \n Trip count: %s" % (
-                CombinedUserGroup.iloc[point]["seq"], CombinedUserGroup.iloc[point]["cum_sum"]),
+    point = int(round(len(AllUsersCombinedUserGroup) * percentage, 0))
+    ax.text(AllUsersCombinedUserGroup.iloc[point]["user_perc"], AllUsersCombinedUserGroup.iloc[point]["cum_perc"],
+            "User count: \n %s \n Trip count:\n %s" % (
+                AllUsersCombinedUserGroup.iloc[point]["seq"], AllUsersCombinedUserGroup.iloc[point]["cum_sum"]),
             horizontalalignment='left',
             verticalalignment='top',
-            multialignment='center')
+            multialignment='center',
+            fontsize=34)
     ax1 = fig.add_subplot(111)
-    ax1.plot([CombinedUserGroup.iloc[point]["user_perc"]], [CombinedUserGroup.iloc[point]["cum_perc"]], marker='o',
-             markersize=10, markerfacecolor="darkred")
+    ax1.plot([AllUsersCombinedUserGroup.iloc[point]["user_perc"]], [AllUsersCombinedUserGroup.iloc[point]["cum_perc"]], marker='o',
+             markersize=14, markerfacecolor="darkred")
     percentage += 0.2
-
 plt.show()
 
 # In/Out Visualizations:  Inside BSS coverage area users vs Outside BSS coverage area users 
@@ -713,9 +740,9 @@ boxPlot = sns.boxplot(x="insideArea", y="speed_median", data=CombinedUserGroup, 
 
 # Age Visualizations:  Box plots for different age groups  
 FilteredCombinedUserGroup = CombinedUserGroup.loc[
-    (CombinedUserGroup['hsl_age'] > 15) & (CombinedUserGroup['hsl_age'] < 80)]
+    (CombinedUserGroup['hsl_age'] > 0) & (CombinedUserGroup['hsl_age'] < 80)]
 FilteredCombinedUserGroup['age_dec'] = CombinedUserGroup.hsl_age.map(
-    lambda hsl_age: 10 * (hsl_age // 10))  # create the age by decade column
+    lambda hsl_age: 20 * (hsl_age // 20))  # create the age by decade column
 
 fig = plt.figure()
 boxPlot = fig.add_subplot(111)
@@ -838,9 +865,9 @@ boxPlot.set_xticklabels(['Male', 'Female'], fontsize=28)
 boxPlot.set_ylim(-400, 1000)
 
 # Activity Visualizations:  Box plots for regular and sporaric users  
-FilteredCombinedUserGroup.sort_values('trip_count', ascending=False, inplace=True)
-q = pd.qcut(FilteredCombinedUserGroup["trip_count"], 5)
-FilteredCombinedUserGroup['ActivityQ'] = q
+CombinedUserGroup.sort_values('trip_count', ascending=False, inplace=True)
+q = pd.qcut(CombinedUserGroup["trip_count"], 5)
+CombinedUserGroup['ActivityQ'] = q
 
 fig = plt.figure()
 boxPlot = fig.add_subplot(111)
