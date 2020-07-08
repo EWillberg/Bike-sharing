@@ -98,6 +98,7 @@ h2.set_xticklabels(
     labels=["15", "20", "25", "30", "35", "40", "45", "50", "55", "60", "65", "70", "75", "80", "85", "90"],
     fontname="Verdana")
 
+
 # Age variation tables (only those columns included where gender is present to match the table results with histograms 1 and 2)
 onlyMenAndWomen = manipulatedDF.loc[(manipulatedDF['hsl_gender'] == "male") | (manipulatedDF['hsl_gender'] == "female")]
 ageCounts = onlyMenAndWomen['age_dec'].value_counts()
@@ -448,32 +449,33 @@ plt.setp(ax.get_legend().get_texts(), fontsize='25') # for legend text
 plt.show()
 
 # Lineplot 3: Hourly trip count variation by age group
-manipulatedDF['age_dec'] = manipulatedDF.hsl_age.map(lambda hsl_age: 20 * (hsl_age // 20))  # Create age decade column
+manipulatedDF['age_dec'] = manipulatedDF.hsl_age.map(lambda hsl_age: 15 * (hsl_age // 15))  # Create age decade column
 
 hourlyTripGroupByAgeGroup = manipulatedDF.groupby(["DepHour", "age_dec", "WeekOrWeekend"]).count().reset_index()
 hourlyTripGroupByAgeGroup = hourlyTripGroupByAgeGroup.loc[hourlyTripGroupByAgeGroup["age_dec"] < 80]
+hourlyTripGroupByAgeGroup = hourlyTripGroupByAgeGroup.loc[hourlyTripGroupByAgeGroup["age_dec"] > 14]
 
-hourlyTripGroupByAge_0_20 = hourlyTripGroupByAgeGroup.loc[hourlyTripGroupByAgeGroup["age_dec"] < 20]
-hourlyTripGroupByAge_21_40 = hourlyTripGroupByAgeGroup.loc[
-    (hourlyTripGroupByAgeGroup["age_dec"] >= 20) & (hourlyTripGroupByAgeGroup["age_dec"] < 40)]
-hourlyTripGroupByAge_41_60 = hourlyTripGroupByAgeGroup.loc[
-    (hourlyTripGroupByAgeGroup["age_dec"] >= 40) & (hourlyTripGroupByAgeGroup["age_dec"] < 60)]
-hourlyTripGroupByAge_61_80 = hourlyTripGroupByAgeGroup.loc[
-    (hourlyTripGroupByAgeGroup["age_dec"] >= 60) & (hourlyTripGroupByAgeGroup["age_dec"] < 80)]
+hourlyTripGroupByAge_15_29 = hourlyTripGroupByAgeGroup.loc[hourlyTripGroupByAgeGroup["age_dec"] >= 15]
+hourlyTripGroupByAge_30_44 = hourlyTripGroupByAgeGroup.loc[
+    (hourlyTripGroupByAgeGroup["age_dec"] >= 30) & (hourlyTripGroupByAgeGroup["age_dec"] < 45)]
+hourlyTripGroupByAge_45_59 = hourlyTripGroupByAgeGroup.loc[
+    (hourlyTripGroupByAgeGroup["age_dec"] >= 45) & (hourlyTripGroupByAgeGroup["age_dec"] < 60)]
+hourlyTripGroupByAge_60_75 = hourlyTripGroupByAgeGroup.loc[
+    (hourlyTripGroupByAgeGroup["age_dec"] >= 60) & (hourlyTripGroupByAgeGroup["age_dec"] < 75)]
 
 hourlyTripGroupByAgeGroup["ageGroupWeekday"] = hourlyTripGroupByAgeGroup["age_dec"].astype(str) + "_" + \
                                                hourlyTripGroupByAgeGroup["WeekOrWeekend"].astype(str)
 hourlyTripGroupByAgeGroup["tripPercent"] = hourlyTripGroupByAgeGroup.apply(
-    lambda row: (row["index"] / hourlyTripGroupByAge_0_20["index"].sum()) * 100
-    if (row["age_dec"] == 0)
-    else ((row["index"] / hourlyTripGroupByAge_21_40["index"].sum()) * 100
-          if row["age_dec"] == 20
-          else ((row["index"] / hourlyTripGroupByAge_41_60["index"].sum()) * 100
-                if row["age_dec"] == 40
-                else ((row["index"] / hourlyTripGroupByAge_61_80["index"].sum()) * 100))), axis=1)
+    lambda row: (row["index"] / hourlyTripGroupByAge_15_29["index"].sum()) * 100
+    if (row["age_dec"] == 15)
+    else ((row["index"] / hourlyTripGroupByAge_30_44["index"].sum()) * 100
+          if row["age_dec"] == 30
+          else ((row["index"] / hourlyTripGroupByAge_45_59["index"].sum()) * 100
+                if row["age_dec"] == 45
+                else ((row["index"] / hourlyTripGroupByAge_60_75["index"].sum()) * 100))), axis=1)
 
 hourlyTripGroupByAgeGroup["Time of the week"] = hourlyTripGroupByAgeGroup.apply(lambda x: "weekday" if x["WeekOrWeekend"] == 1 else "weekend", axis = 1)
-hourlyTripGroupByAgeGroup['Age group'] = hourlyTripGroupByAgeGroup['age_dec'].map(({0 : "0-19", 20: "20-39",40: "40-59", 60:"60-79"}))
+hourlyTripGroupByAgeGroup['Age group'] = hourlyTripGroupByAgeGroup['age_dec'].map(({15 : "15-30", 30: "30-44", 45: "45-59", 60:"60-74"}))
 
 ax = sns.lineplot(y="tripPercent", x="DepHour", hue="Age group", data=hourlyTripGroupByAgeGroup,
                    style="Time of the week", linewidth = 5.0)
